@@ -1,0 +1,1390 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Attendance Tracker</title>
+<meta name="description" content="College Attendance Tracker - Track your attendance for any college">
+<meta name="theme-color" content="#6366f1">
+<style>
+:root {
+  --bg: #f8fafc; --bg2: #ffffff; --bg3: #f1f5f9; --border: #e2e8f0;
+  --text: #1e293b; --text2: #64748b; --text3: #94a3b8;
+  --primary: #6366f1; --primary-light: #e0e7ff; --primary-dark: #4f46e5;
+  --green: #22c55e; --green-light: #dcfce7;
+  --yellow: #f59e0b; --yellow-light: #fef3c7;
+  --red: #ef4444; --red-light: #fee2e2;
+  --blue: #3b82f6; --blue-light: #dbeafe;
+  --shadow: 0 1px 3px rgba(0,0,0,.08), 0 1px 2px rgba(0,0,0,.06);
+  --shadow-md: 0 4px 6px rgba(0,0,0,.07), 0 2px 4px rgba(0,0,0,.06);
+  --shadow-lg: 0 10px 15px rgba(0,0,0,.1), 0 4px 6px rgba(0,0,0,.05);
+  --radius: 12px; --radius-sm: 8px; --radius-lg: 16px;
+  --nav-h: 64px; --top-h: 56px; --transition: .18s ease;
+}
+[data-theme="dark"] {
+  --bg: #0f172a; --bg2: #1e293b; --bg3: #334155; --border: #334155;
+  --text: #f1f5f9; --text2: #94a3b8; --text3: #64748b;
+  --primary: #818cf8; --primary-light: #312e81; --primary-dark: #6366f1;
+  --green: #4ade80; --green-light: #14532d;
+  --yellow: #fbbf24; --yellow-light: #451a03;
+  --red: #f87171; --red-light: #450a0a;
+  --blue: #60a5fa; --blue-light: #1e3a5f;
+  --shadow: 0 1px 3px rgba(0,0,0,.3);
+  --shadow-md: 0 4px 6px rgba(0,0,0,.25);
+  --shadow-lg: 0 10px 15px rgba(0,0,0,.3);
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { font-size: 16px; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  background: var(--bg); color: var(--text);
+  min-height: 100vh; overflow-x: hidden;
+  transition: background var(--transition), color var(--transition);
+}
+a { color: var(--primary); text-decoration: none; }
+button { cursor: pointer; border: none; background: none; font-family: inherit; }
+input, select, textarea {
+  font-family: inherit; font-size: 1rem;
+  background: var(--bg); color: var(--text);
+  border: 1.5px solid var(--border); border-radius: var(--radius-sm);
+  padding: .6rem .85rem; width: 100%; outline: none;
+  transition: border-color var(--transition), box-shadow var(--transition);
+}
+input:focus, select:focus, textarea:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(99,102,241,.15);
+}
+label { font-size: .875rem; font-weight: 500; color: var(--text2); display: block; margin-bottom: .3rem; }
+h1 { font-size: 1.5rem; font-weight: 700; }
+h2 { font-size: 1.2rem; font-weight: 600; }
+h3 { font-size: 1rem; font-weight: 600; }
+p { line-height: 1.6; }
+
+/* Layout */
+#app { display: flex; flex-direction: column; min-height: 100vh; }
+#topbar {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+  height: var(--top-h); background: var(--bg2);
+  border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; gap: .5rem;
+  padding: 0 1rem; box-shadow: var(--shadow);
+}
+#topbar .app-title { font-size: 1.1rem; font-weight: 700; color: var(--primary); white-space: nowrap; }
+#college-switcher-wrap { flex: 1; min-width: 0; }
+#college-switcher { width: 100%; max-width: 220px; font-size: .85rem; padding: .35rem .6rem; background: var(--bg3); border-color: var(--border); }
+.topbar-actions { display: flex; gap: .4rem; align-items: center; }
+.icon-btn {
+  width: 38px; height: 38px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  background: var(--bg3); color: var(--text2);
+  font-size: 1.1rem; transition: background var(--transition); flex-shrink: 0;
+}
+.icon-btn:hover { background: var(--primary-light); color: var(--primary); }
+#main-content {
+  margin-top: var(--top-h); margin-bottom: var(--nav-h);
+  flex: 1; padding: 1rem; max-width: 700px; width: 100%;
+  margin-left: auto; margin-right: auto;
+}
+#bottom-nav {
+  position: fixed; bottom: 0; left: 0; right: 0; z-index: 100;
+  height: var(--nav-h); background: var(--bg2);
+  border-top: 1px solid var(--border); display: flex;
+  box-shadow: 0 -2px 10px rgba(0,0,0,.06);
+}
+.nav-item {
+  flex: 1; display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  gap: .2rem; padding: .3rem .2rem;
+  color: var(--text3); font-size: .68rem; font-weight: 500;
+  transition: color var(--transition); -webkit-tap-highlight-color: transparent;
+}
+.nav-item .nav-icon { font-size: 1.35rem; line-height: 1; }
+.nav-item.active { color: var(--primary); }
+.nav-item.active .nav-icon { transform: translateY(-1px); }
+@media (min-width: 768px) {
+  #bottom-nav {
+    position: fixed; top: var(--top-h); left: 0; bottom: 0;
+    width: 200px; height: auto; flex-direction: column;
+    border-top: none; border-right: 1px solid var(--border);
+    padding: 1rem 0; justify-content: flex-start;
+  }
+  .nav-item { flex-direction: row; gap: .65rem; justify-content: flex-start; padding: .75rem 1.25rem; font-size: .9rem; border-radius: 0; }
+  .nav-item .nav-icon { font-size: 1.2rem; }
+  #main-content { margin-left: 200px; margin-bottom: 0; padding: 1.5rem; max-width: none; }
+}
+
+/* Components */
+.card { background: var(--bg2); border-radius: var(--radius); border: 1px solid var(--border); padding: 1rem; box-shadow: var(--shadow); }
+.card + .card { margin-top: .75rem; }
+.section-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem; }
+.section-header h2 { flex: 1; }
+.btn {
+  display: inline-flex; align-items: center; justify-content: center;
+  gap: .4rem; padding: .6rem 1.1rem; border-radius: var(--radius-sm);
+  font-size: .9rem; font-weight: 600;
+  transition: background var(--transition), transform .1s, box-shadow var(--transition);
+  white-space: nowrap;
+}
+.btn:active { transform: scale(.97); }
+.btn-primary { background: var(--primary); color: #fff; box-shadow: 0 2px 8px rgba(99,102,241,.3); }
+.btn-primary:hover { background: var(--primary-dark); }
+.btn-secondary { background: var(--bg3); color: var(--text); border: 1.5px solid var(--border); }
+.btn-secondary:hover { border-color: var(--primary); color: var(--primary); }
+.btn-danger { background: var(--red-light); color: var(--red); }
+.btn-danger:hover { background: var(--red); color: #fff; }
+.btn-sm { padding: .4rem .8rem; font-size: .8rem; border-radius: 6px; }
+.btn-icon { width: 36px; height: 36px; padding: 0; border-radius: 8px; }
+.btn-full { width: 100%; }
+.modal-overlay {
+  position: fixed; inset: 0; z-index: 200;
+  background: rgba(0,0,0,.5); backdrop-filter: blur(2px);
+  display: flex; align-items: flex-end; justify-content: center;
+  opacity: 0; pointer-events: none; transition: opacity .2s;
+}
+.modal-overlay.open { opacity: 1; pointer-events: all; }
+.modal {
+  background: var(--bg2); border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+  width: 100%; max-width: 540px; padding: 1.25rem;
+  transform: translateY(100%); transition: transform .25s cubic-bezier(.32,.72,0,1);
+  max-height: 92vh; overflow-y: auto;
+}
+.modal-overlay.open .modal { transform: translateY(0); }
+@media (min-width: 600px) {
+  .modal-overlay { align-items: center; }
+  .modal { border-radius: var(--radius-lg); transform: scale(.95) translateY(10px); }
+  .modal-overlay.open .modal { transform: scale(1) translateY(0); }
+}
+.modal-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.1rem; }
+.modal-header h2 { font-size: 1.1rem; }
+.modal-close { width: 32px; height: 32px; border-radius: 50%; background: var(--bg3); color: var(--text2); font-size: 1rem; display: flex; align-items: center; justify-content: center; }
+.modal-close:hover { background: var(--red-light); color: var(--red); }
+.form-group { margin-bottom: .9rem; }
+.form-row { display: flex; gap: .75rem; }
+.form-row .form-group { flex: 1; }
+#toast-container {
+  position: fixed; bottom: calc(var(--nav-h) + 12px); left: 50%;
+  transform: translateX(-50%); z-index: 300;
+  display: flex; flex-direction: column; align-items: center; gap: .4rem;
+  pointer-events: none;
+}
+.toast {
+  background: var(--text); color: var(--bg);
+  padding: .65rem 1.1rem; border-radius: 999px;
+  font-size: .875rem; font-weight: 500;
+  display: flex; align-items: center; gap: .6rem;
+  box-shadow: var(--shadow-lg); pointer-events: all;
+  animation: toastIn .2s ease, toastOut .2s ease 2.8s forwards;
+  white-space: nowrap;
+}
+.toast-undo { background: var(--primary); color: #fff; padding: .25rem .6rem; border-radius: 999px; font-size: .78rem; font-weight: 700; }
+@keyframes toastIn { from { opacity:0; transform:translateY(12px) scale(.9); } to { opacity:1; transform:none; } }
+@keyframes toastOut { to { opacity:0; transform:translateY(12px) scale(.9); } }
+.ring-wrap { display: flex; align-items: center; justify-content: center; position: relative; }
+.ring-text { position: absolute; text-align: center; font-size: 1.5rem; font-weight: 700; color: var(--text); line-height: 1; }
+.ring-text small { font-size: .65rem; font-weight: 400; color: var(--text2); display: block; }
+.dot { width: 12px; height: 12px; border-radius: 50%; flex-shrink: 0; }
+.color-swatch { width: 28px; height: 28px; border-radius: 6px; border: 2px solid transparent; cursor: pointer; transition: transform .1s; }
+.color-swatch:hover, .color-swatch.selected { transform: scale(1.15); border-color: var(--text); }
+.chip { display: inline-flex; align-items: center; gap: .3rem; padding: .25rem .6rem; border-radius: 999px; font-size: .75rem; font-weight: 600; }
+.chip-green { background: var(--green-light); color: var(--green); }
+.chip-yellow { background: var(--yellow-light); color: var(--yellow); }
+.chip-red { background: var(--red-light); color: var(--red); }
+.chip-blue { background: var(--blue-light); color: var(--blue); }
+.chip-gray { background: var(--bg3); color: var(--text2); }
+.progress-bar { width: 100%; height: 8px; background: var(--bg3); border-radius: 999px; overflow: hidden; }
+.progress-bar-fill { height: 100%; border-radius: 999px; transition: width .5s cubic-bezier(.4,0,.2,1); }
+.empty-state { text-align: center; padding: 2.5rem 1rem; color: var(--text2); }
+.empty-state .empty-icon { font-size: 3rem; margin-bottom: .75rem; }
+.empty-state h3 { color: var(--text); margin-bottom: .4rem; }
+.empty-state p { font-size: .875rem; margin-bottom: 1rem; }
+.divider { height: 1px; background: var(--border); margin: .75rem 0; }
+.badge { display: inline-flex; align-items: center; justify-content: center; min-width: 20px; height: 20px; padding: 0 5px; border-radius: 999px; font-size: .7rem; font-weight: 700; background: var(--primary); color: #fff; }
+.subject-row { display: flex; align-items: center; gap: .75rem; padding: .65rem 0; border-bottom: 1px solid var(--border); }
+.subject-row:last-child { border-bottom: none; }
+.subject-info { flex: 1; min-width: 0; }
+.subject-name { font-weight: 600; font-size: .95rem; }
+.subject-meta { font-size: .78rem; color: var(--text2); margin-top: .1rem; }
+.att-btns { display: flex; gap: .4rem; flex-wrap: wrap; }
+.att-btn { flex: 1; min-width: 70px; padding: .55rem .4rem; border-radius: 8px; font-size: .78rem; font-weight: 600; border: 2px solid transparent; transition: all .15s; text-align: center; }
+.att-btn-present { background: var(--green-light); color: var(--green); border-color: var(--green-light); }
+.att-btn-absent  { background: var(--red-light);   color: var(--red);   border-color: var(--red-light); }
+.att-btn-cancel  { background: var(--bg3);         color: var(--text2); border-color: var(--border); }
+.att-btn-holiday { background: var(--blue-light);  color: var(--blue);  border-color: var(--blue-light); }
+.att-btn.selected { border-width: 2px; filter: brightness(.9); transform: scale(1.04); }
+.att-btn-present.selected { border-color: var(--green); }
+.att-btn-absent.selected  { border-color: var(--red); }
+.att-btn-cancel.selected  { border-color: var(--text3); }
+.att-btn-holiday.selected { border-color: var(--blue); }
+.date-nav { display: flex; align-items: center; gap: .5rem; margin-bottom: 1rem; }
+.date-nav input[type="date"] { flex: 1; font-size: .875rem; }
+.day-tabs { display: flex; gap: .3rem; overflow-x: auto; padding-bottom: .4rem; scrollbar-width: none; margin-bottom: 1rem; }
+.day-tabs::-webkit-scrollbar { display: none; }
+.day-tab { padding: .4rem .8rem; border-radius: 999px; font-size: .82rem; font-weight: 600; white-space: nowrap; background: var(--bg3); color: var(--text2); border: 2px solid transparent; transition: all .15s; }
+.day-tab.active { background: var(--primary-light); color: var(--primary); border-color: var(--primary); }
+.calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 3px; }
+.cal-header-cell { text-align: center; font-size: .72rem; font-weight: 600; color: var(--text2); padding: .3rem 0; }
+.cal-cell { aspect-ratio: 1; border-radius: 8px; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: .82rem; cursor: pointer; transition: background .15s; position: relative; min-height: 36px; }
+.cal-cell:hover { filter: brightness(.95); }
+.cal-cell.today { font-weight: 700; }
+.cal-cell.today::after { content: ''; position: absolute; bottom: 3px; width: 4px; height: 4px; border-radius: 50%; background: var(--primary); }
+.cal-cell.empty { cursor: default; }
+.cal-cell.all-present { background: var(--green-light); color: var(--green); }
+.cal-cell.partial { background: var(--yellow-light); color: var(--yellow); }
+.cal-cell.all-absent { background: var(--red-light); color: var(--red); }
+.cal-cell.holiday { background: var(--blue-light); color: var(--blue); }
+.cal-cell.no-class { background: var(--bg3); color: var(--text3); }
+.cal-cell.has-data { font-weight: 600; }
+.wizard-steps { display: flex; align-items: center; justify-content: center; gap: .25rem; margin-bottom: 1.5rem; }
+.wizard-step-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--bg3); border: 2px solid var(--border); transition: all .2s; }
+.wizard-step-dot.active { width: 24px; border-radius: 4px; background: var(--primary); border-color: var(--primary); }
+.wizard-step-dot.done { background: var(--green); border-color: var(--green); }
+.stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: .75rem; margin-bottom: 1rem; }
+.stat-card { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius); padding: .85rem; }
+.stat-value { font-size: 1.6rem; font-weight: 700; }
+.stat-label { font-size: .75rem; color: var(--text2); margin-top: .15rem; }
+.subj-stat-card { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius); padding: 1rem; margin-bottom: .75rem; }
+.subj-stat-header { display: flex; align-items: center; gap: .6rem; margin-bottom: .6rem; }
+.subj-stat-pct { font-size: 1.4rem; font-weight: 700; margin-left: auto; }
+.subj-insight { font-size: .8rem; color: var(--text2); margin-top: .5rem; padding: .45rem .65rem; background: var(--bg3); border-radius: 6px; }
+#trend-canvas { width: 100%; height: 180px; display: block; border-radius: var(--radius-sm); }
+.scroll-list { display: flex; flex-direction: column; gap: .5rem; }
+.period-item { display: flex; align-items: center; gap: .6rem; padding: .6rem .75rem; background: var(--bg3); border-radius: 8px; }
+.period-item .period-info { flex: 1; min-width: 0; }
+.period-title { font-weight: 600; font-size: .9rem; }
+.period-meta { font-size: .75rem; color: var(--text2); }
+.setting-row { display: flex; align-items: center; justify-content: space-between; padding: .85rem 0; border-bottom: 1px solid var(--border); gap: 1rem; }
+.setting-row:last-child { border-bottom: none; }
+.setting-label { font-size: .95rem; }
+.setting-desc { font-size: .78rem; color: var(--text2); margin-top: .1rem; }
+.toggle { position: relative; width: 48px; height: 26px; flex-shrink: 0; }
+.toggle input { opacity: 0; width: 0; height: 0; }
+.toggle-track { position: absolute; inset: 0; background: var(--bg3); border-radius: 999px; border: 2px solid var(--border); cursor: pointer; transition: background .2s; }
+.toggle-track::after { content: ''; position: absolute; left: 2px; top: 50%; transform: translateY(-50%); width: 18px; height: 18px; border-radius: 50%; background: var(--text2); transition: left .2s, background .2s; }
+.toggle input:checked + .toggle-track { background: var(--primary); border-color: var(--primary); }
+.toggle input:checked + .toggle-track::after { left: calc(100% - 20px); background: #fff; }
+.confirm-danger { color: var(--red); font-weight: 600; background: var(--red-light); padding: .65rem; border-radius: 8px; font-size: .875rem; margin-bottom: 1rem; }
+.whatif-wrap { background: var(--bg3); border-radius: var(--radius-sm); padding: .85rem; margin-top: .75rem; }
+.whatif-row { display: flex; align-items: center; gap: .75rem; }
+.whatif-row input[type=number] { width: 80px; flex-shrink: 0; }
+.whatif-result { font-weight: 600; font-size: 1rem; }
+.mt-1{margin-top:.5rem}.mt-2{margin-top:1rem}.mt-3{margin-top:1.5rem}
+.mb-1{margin-bottom:.5rem}.mb-2{margin-bottom:1rem}
+.text-sm{font-size:.875rem}.text-xs{font-size:.75rem}.text-muted{color:var(--text2)}
+.text-center{text-align:center}.font-bold{font-weight:700}
+.flex{display:flex}.flex-1{flex:1}.items-center{align-items:center}
+.justify-between{justify-content:space-between}.gap-1{gap:.5rem}.gap-2{gap:1rem}
+.w-full{width:100%}.hidden{display:none!important}
+.fade-in{animation:fadeIn .2s ease}
+@keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+</style>
+</head>
+<body>
+<div id="app">
+  <header id="topbar">
+    <span class="app-title">📋 Attend</span>
+    <div id="college-switcher-wrap">
+      <select id="college-switcher" aria-label="Switch college"></select>
+    </div>
+    <div class="topbar-actions">
+      <button class="icon-btn" id="add-college-btn" title="Add college" aria-label="Add college">➕</button>
+      <button class="icon-btn" id="theme-toggle-btn" title="Toggle dark mode" aria-label="Toggle theme">🌙</button>
+    </div>
+  </header>
+  <main id="main-content" role="main"></main>
+  <nav id="bottom-nav" role="navigation" aria-label="Main navigation">
+    <button class="nav-item active" data-page="today" aria-label="Today"><span class="nav-icon">📅</span><span>Today</span></button>
+    <button class="nav-item" data-page="dashboard" aria-label="Dashboard"><span class="nav-icon">📊</span><span>Dashboard</span></button>
+    <button class="nav-item" data-page="calendar" aria-label="Calendar"><span class="nav-icon">🗓️</span><span>Calendar</span></button>
+    <button class="nav-item" data-page="timetable" aria-label="Timetable"><span class="nav-icon">📆</span><span>Timetable</span></button>
+    <button class="nav-item" data-page="settings" aria-label="Settings"><span class="nav-icon">⚙️</span><span>Settings</span></button>
+  </nav>
+</div>
+<div id="modal-overlay" class="modal-overlay" role="dialog" aria-modal="true">
+  <div class="modal" id="modal-box">
+    <div class="modal-header">
+      <h2 id="modal-title">Modal</h2>
+      <button class="modal-close" id="modal-close-btn" aria-label="Close modal">✕</button>
+    </div>
+    <div id="modal-body"></div>
+  </div>
+</div>
+<div id="toast-container" aria-live="polite" aria-atomic="false"></div>
+
+<script>
+/* =========================================================
+   SECTION 1: CONSTANTS & UTILITIES
+   ========================================================= */
+const STORAGE_KEY = 'att_tracker_v1';
+const DAYS = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
+const DAY_SHORT = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+const SUBJECT_COLORS = ['#6366f1','#ec4899','#f59e0b','#10b981','#3b82f6','#8b5cf6','#ef4444','#14b8a6','#f97316','#06b6d4'];
+
+function uid() { return Math.random().toString(36).slice(2,9) + Date.now().toString(36); }
+function todayStr() { return new Date().toISOString().split('T')[0]; }
+function dateLabel(str) {
+  if (!str) return '';
+  return new Date(str+'T00:00:00').toLocaleDateString(undefined,{weekday:'short',month:'short',day:'numeric'});
+}
+function isToday(str) { return str === todayStr(); }
+function clamp(val, min, max) { return Math.max(min, Math.min(max, val)); }
+function pct(present, total) { return total ? (present / total) * 100 : null; }
+function escHtml(str) {
+  if (!str) return '';
+  return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+/* =========================================================
+   SECTION 2: STATE SHAPE
+   ========================================================= */
+function makeCollege(name) {
+  return {
+    id: uid(), name,
+    semesterStart: '', semesterEnd: '', minTarget: 75,
+    subjects: [],
+    timetable: { Monday:[],Tuesday:[],Wednesday:[],Thursday:[],Friday:[],Saturday:[],Sunday:[] },
+    attendance: {}
+  };
+}
+function defaultState() {
+  return { version:1, theme:'light', activeCollegeId:null, colleges:[], onboardingDone:false };
+}
+
+/* =========================================================
+   SECTION 3: LOCALSTORAGE
+   ========================================================= */
+let state = defaultState();
+
+function loadState() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (raw) state = Object.assign(defaultState(), JSON.parse(raw));
+  } catch(e) { console.warn('Load failed:', e); state = defaultState(); }
+}
+function saveState() {
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
+  catch(e) { console.warn('Save failed:', e); showToast('⚠️ Could not save — storage full'); }
+}
+
+/* =========================================================
+   SECTION 4: STATE ACCESSORS
+   ========================================================= */
+function getCollege(id) { return state.colleges.find(c => c.id === (id || state.activeCollegeId)); }
+function activeCollege() { return getCollege(state.activeCollegeId); }
+function getSubject(college, subjectId) { return college?.subjects?.find(s => s.id === subjectId); }
+function getDayRecord(college, dateStr) { return college?.attendance?.[dateStr] || null; }
+function ensureDayRecord(college, dateStr) {
+  if (!college.attendance[dateStr]) college.attendance[dateStr] = { holiday:false, note:'', classes:[] };
+  return college.attendance[dateStr];
+}
+function getScheduledClasses(college, dateStr) {
+  const dow = new Date(dateStr+'T00:00:00').getDay();
+  const dayName = DAYS[dow === 0 ? 6 : dow - 1];
+  const ttSlots = college.timetable[dayName] || [];
+  const dayRec = getDayRecord(college, dateStr);
+  const overrides = dayRec?.classes || [];
+  const result = [];
+  for (const slot of ttSlots) {
+    const ov = overrides.find(c => c.ttId === slot.id);
+    if (ov?.removed) continue;
+    result.push({
+      id: ov ? ov.id : slot.id, ttId: slot.id,
+      subjectId: slot.subjectId, startTime: slot.startTime, endTime: slot.endTime,
+      type: ov?.type || slot.type, status: ov?.status || null,
+      note: ov?.note || '', isExtra: false,
+    });
+  }
+  for (const cls of overrides) { if (cls.isExtra) result.push({...cls}); }
+  return result;
+}
+
+/* =========================================================
+   SECTION 5: STATISTICS
+   ========================================================= */
+function calcSubjectStats(college, subjectId) {
+  let present = 0, total = 0;
+  for (const [dateStr, dayRec] of Object.entries(college.attendance)) {
+    if (dayRec.holiday) continue;
+    for (const cls of getScheduledClasses(college, dateStr)) {
+      if (cls.subjectId !== subjectId || cls.status === 'cancelled') continue;
+      total++;
+      if (cls.status === 'present') present++;
+    }
+  }
+  return { present, total };
+}
+function calcSubjectInsight(present, total, target) {
+  if (!total) return null;
+  const p = (present / total) * 100;
+  if (p < target) {
+    const needed = Math.ceil((target * total - 100 * present) / (100 - target));
+    return { type:'below', text:`Attend next ${needed} class${needed===1?'':'es'} to reach ${target}%` };
+  }
+  const canSkip = Math.floor((100 * present - target * total) / target);
+  return { type:'above', text:`You can safely skip ${canSkip} class${canSkip===1?'':'es'}` };
+}
+function calcOverallStats(college) {
+  let present = 0, total = 0;
+  for (const subj of college.subjects) {
+    const s = calcSubjectStats(college, subj.id);
+    present += s.present; total += s.total;
+  }
+  return { present, total, pct: pct(present, total) };
+}
+function calcWhatIf(present, total, missingN) {
+  const newTotal = total + missingN;
+  return newTotal ? (present / newTotal) * 100 : null;
+}
+function calcTrend(college) {
+  const today = new Date(todayStr()+'T00:00:00');
+  const weeks = 8;
+  return Array.from({length:weeks}, (_,i) => {
+    const weekEnd = new Date(today); weekEnd.setDate(today.getDate() - (weeks-1-i)*7);
+    const weekStart = new Date(weekEnd); weekStart.setDate(weekEnd.getDate() - 6);
+    let present = 0, total = 0;
+    for (const [dateStr, dayRec] of Object.entries(college.attendance)) {
+      const d = new Date(dateStr+'T00:00:00');
+      if (d < weekStart || d > weekEnd || dayRec.holiday) continue;
+      for (const cls of getScheduledClasses(college, dateStr)) {
+        if (cls.status === 'cancelled') continue;
+        total++; if (cls.status === 'present') present++;
+      }
+    }
+    return { label:`W${i+1}`, present, total, pct: pct(present, total) };
+  });
+}
+function calcMonthSummary(college, year, month) {
+  const result = {};
+  const daysInMonth = new Date(year, month+1, 0).getDate();
+  for (let d = 1; d <= daysInMonth; d++) {
+    const dateStr = `${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const dayRec = getDayRecord(college, dateStr);
+    if (!dayRec) { result[dateStr] = 'no-data'; continue; }
+    if (dayRec.holiday) { result[dateStr] = 'holiday'; continue; }
+    const classes = getScheduledClasses(college, dateStr);
+    const conducted = classes.filter(c => c.status && c.status !== 'cancelled');
+    if (!conducted.length) { result[dateStr] = 'no-class'; continue; }
+    const presentN = conducted.filter(c => c.status === 'present').length;
+    const absentN  = conducted.filter(c => c.status === 'absent').length;
+    if (absentN === 0) result[dateStr] = 'all-present';
+    else if (presentN === 0) result[dateStr] = 'all-absent';
+    else result[dateStr] = 'partial';
+  }
+  return result;
+}
+
+/* =========================================================
+   SECTION 6: TOAST
+   ========================================================= */
+let _undoFn = null, _toastTimer = null;
+function showToast(msg, withUndo = false, undoFn = null) {
+  const container = document.getElementById('toast-container');
+  container.innerHTML = '';
+  if (_toastTimer) clearTimeout(_toastTimer);
+  _undoFn = undoFn;
+  const t = document.createElement('div');
+  t.className = 'toast';
+  t.innerHTML = `<span>${msg}</span>`;
+  if (withUndo && undoFn) {
+    const u = document.createElement('button');
+    u.className = 'toast-undo'; u.textContent = 'UNDO';
+    u.onclick = () => { if (_undoFn) { _undoFn(); _undoFn = null; } container.innerHTML = ''; };
+    t.appendChild(u);
+  }
+  container.appendChild(t);
+  _toastTimer = setTimeout(() => { container.innerHTML = ''; }, 3000);
+}
+
+/* =========================================================
+   SECTION 7: MODAL
+   ========================================================= */
+function openModal(title, bodyHTML) {
+  document.getElementById('modal-title').textContent = title;
+  document.getElementById('modal-body').innerHTML = bodyHTML;
+  document.getElementById('modal-overlay').classList.add('open');
+}
+function closeModal() { document.getElementById('modal-overlay').classList.remove('open'); }
+
+/* =========================================================
+   SECTION 8: NAVIGATION
+   ========================================================= */
+let currentPage = 'today';
+let currentDate = todayStr();
+let timetableDay = DAYS[new Date().getDay() === 0 ? 6 : new Date().getDay() - 1];
+let calendarMonth = { year: new Date().getFullYear(), month: new Date().getMonth() };
+
+function navigate(page) {
+  currentPage = page;
+  document.querySelectorAll('.nav-item').forEach(el => el.classList.toggle('active', el.dataset.page === page));
+  renderPage();
+}
+function renderPage() {
+  const col = activeCollege();
+  const main = document.getElementById('main-content');
+  main.classList.remove('fade-in');
+  void main.offsetWidth;
+  main.classList.add('fade-in');
+  if (!col && currentPage !== 'settings') { renderNoCollege(main); return; }
+  switch (currentPage) {
+    case 'today':     renderToday(main, col); break;
+    case 'dashboard': renderDashboard(main, col); break;
+    case 'calendar':  renderCalendar(main, col); break;
+    case 'timetable': renderTimetable(main, col); break;
+    case 'settings':  renderSettings(main, col); break;
+  }
+}
+function renderNoCollege(main) {
+  main.innerHTML = `<div class="empty-state"><div class="empty-icon">🏫</div>
+    <h3>No College Yet</h3><p>Add your first college to start tracking attendance.</p>
+    <button class="btn btn-primary" onclick="openAddCollegeModal()">➕ Add College</button></div>`;
+}
+
+/* =========================================================
+   SECTION 9: COLLEGE MANAGEMENT
+   ========================================================= */
+function renderCollegeSwitcher() {
+  const sel = document.getElementById('college-switcher');
+  sel.innerHTML = state.colleges.length === 0
+    ? '<option value="">No college — add one</option>'
+    : state.colleges.map(c => `<option value="${c.id}" ${c.id===state.activeCollegeId?'selected':''}>${escHtml(c.name)}</option>`).join('');
+}
+function openAddCollegeModal(editId = null) {
+  const col = editId ? getCollege(editId) : null;
+  openModal(col ? 'Edit College' : 'Add College', `
+    <div class="form-group"><label for="mc-name">College / Profile Name *</label>
+      <input id="mc-name" type="text" placeholder="e.g. Engineering – Sem 3" maxlength="60" value="${escHtml(col?.name||'')}"></div>
+    <div class="form-row">
+      <div class="form-group"><label for="mc-start">Semester Start</label><input id="mc-start" type="date" value="${col?.semesterStart||''}"></div>
+      <div class="form-group"><label for="mc-end">Semester End</label><input id="mc-end" type="date" value="${col?.semesterEnd||''}"></div>
+    </div>
+    <div class="form-group"><label for="mc-target">Min. Attendance Target (%)</label>
+      <input id="mc-target" type="number" min="1" max="100" value="${col?.minTarget??75}"></div>
+    <div class="flex gap-1 mt-2">
+      ${editId?`<button class="btn btn-danger btn-sm" onclick="deleteCollegeConfirm('${editId}')">🗑 Delete</button>`:''}
+      <button class="btn btn-primary flex-1" onclick="saveCollege('${editId||''}')">${col?'Save Changes':'Add College'}</button>
+    </div>`);
+  setTimeout(() => document.getElementById('mc-name')?.focus(), 100);
+}
+function saveCollege(editId) {
+  const name   = document.getElementById('mc-name').value.trim();
+  const start  = document.getElementById('mc-start').value;
+  const end    = document.getElementById('mc-end').value;
+  const target = clamp(parseInt(document.getElementById('mc-target').value)||75, 1, 100);
+  if (!name) { showToast('⚠️ Please enter a college name'); return; }
+  if (editId) {
+    const col = getCollege(editId); if (!col) return;
+    col.name=name; col.semesterStart=start; col.semesterEnd=end; col.minTarget=target;
+    showToast('✅ College updated');
+  } else {
+    const col = makeCollege(name); col.semesterStart=start; col.semesterEnd=end; col.minTarget=target;
+    state.colleges.push(col); state.activeCollegeId = col.id;
+    showToast('✅ College added');
+  }
+  saveState(); closeModal(); renderCollegeSwitcher(); renderPage();
+}
+function deleteCollegeConfirm(id) {
+  const col = getCollege(id); if (!col) return;
+  openModal('Delete College', `
+    <div class="confirm-danger">⚠️ Delete "${escHtml(col.name)}"? All subjects and records will be lost.</div>
+    <div class="flex gap-1">
+      <button class="btn btn-secondary flex-1" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-danger flex-1" onclick="deleteCollege('${id}')">Yes, Delete</button>
+    </div>`);
+}
+function deleteCollege(id) {
+  state.colleges = state.colleges.filter(c => c.id !== id);
+  if (state.activeCollegeId === id) state.activeCollegeId = state.colleges[0]?.id || null;
+  saveState(); closeModal(); renderCollegeSwitcher(); renderPage();
+  showToast('🗑 College deleted');
+}
+
+/* =========================================================
+   SECTION 10: SUBJECT MANAGEMENT
+   ========================================================= */
+function openSubjectModal(editId = null) {
+  const col = activeCollege(); if (!col) return;
+  const subj = editId ? getSubject(col, editId) : null;
+  const currentColor = subj?.color || SUBJECT_COLORS[0];
+  const swatches = SUBJECT_COLORS.map(c =>
+    `<div class="color-swatch ${c===currentColor?'selected':''}" style="background:${c}" data-color="${c}" onclick="selectColor(this)"></div>`
+  ).join('');
+  openModal(subj ? 'Edit Subject' : 'Add Subject', `
+    <div class="form-group"><label for="ms-name">Subject Name *</label>
+      <input id="ms-name" type="text" placeholder="e.g. Mathematics" maxlength="50" value="${escHtml(subj?.name||'')}"></div>
+    <div class="form-row">
+      <div class="form-group"><label for="ms-code">Short Code</label><input id="ms-code" type="text" placeholder="e.g. MATH" maxlength="10" value="${escHtml(subj?.code||'')}"></div>
+      <div class="form-group"><label for="ms-teacher">Teacher</label><input id="ms-teacher" type="text" placeholder="Optional" maxlength="40" value="${escHtml(subj?.teacher||'')}"></div>
+    </div>
+    <div class="form-group"><label>Color</label>
+      <div style="display:flex;gap:.5rem;flex-wrap:wrap">${swatches}</div>
+      <input type="hidden" id="ms-color" value="${currentColor}"></div>
+    <div class="flex gap-1 mt-2">
+      ${editId?`<button class="btn btn-danger btn-sm" onclick="deleteSubjectConfirm('${editId}')">🗑</button>`:''}
+      <button class="btn btn-primary flex-1" onclick="saveSubject('${editId||''}')">${subj?'Save':'Add Subject'}</button>
+    </div>`);
+  setTimeout(() => document.getElementById('ms-name')?.focus(), 100);
+}
+function selectColor(el) {
+  document.querySelectorAll('.color-swatch').forEach(s => s.classList.remove('selected'));
+  el.classList.add('selected');
+  document.getElementById('ms-color').value = el.dataset.color;
+}
+function saveSubject(editId) {
+  const col = activeCollege(); if (!col) return;
+  const name    = document.getElementById('ms-name').value.trim();
+  const code    = document.getElementById('ms-code').value.trim();
+  const teacher = document.getElementById('ms-teacher').value.trim();
+  const color   = document.getElementById('ms-color').value;
+  if (!name) { showToast('⚠️ Subject name is required'); return; }
+  if (col.subjects.find(s => s.name.toLowerCase()===name.toLowerCase() && s.id!==editId))
+    { showToast('⚠️ Subject already exists'); return; }
+  if (editId) {
+    const subj = getSubject(col, editId); if (!subj) return;
+    subj.name=name; subj.code=code; subj.teacher=teacher; subj.color=color;
+    showToast('✅ Subject updated');
+  } else {
+    col.subjects.push({id:uid(),name,code,teacher,color});
+    showToast('✅ Subject added');
+  }
+  saveState(); closeModal(); renderPage();
+}
+function deleteSubjectConfirm(id) {
+  const col = activeCollege(); if (!col) return;
+  const subj = getSubject(col, id);
+  openModal('Delete Subject', `
+    <div class="confirm-danger">⚠️ Delete "${escHtml(subj?.name)}"? All attendance records for this subject will be removed.</div>
+    <div class="flex gap-1">
+      <button class="btn btn-secondary flex-1" onclick="openSubjectModal('${id}')">Cancel</button>
+      <button class="btn btn-danger flex-1" onclick="deleteSubject('${id}')">Yes, Delete</button>
+    </div>`);
+}
+function deleteSubject(id) {
+  const col = activeCollege(); if (!col) return;
+  col.subjects = col.subjects.filter(s => s.id !== id);
+  for (const day of DAYS) col.timetable[day] = col.timetable[day].filter(p => p.subjectId !== id);
+  for (const rec of Object.values(col.attendance)) rec.classes = rec.classes.filter(c => c.subjectId !== id);
+  saveState(); closeModal(); renderPage(); showToast('🗑 Subject deleted');
+}
+
+/* =========================================================
+   SECTION 11: TIMETABLE
+   ========================================================= */
+function renderTimetable(main, col) {
+  const daytabs = DAYS.map((d,i) => {
+    const count = col.timetable[d]?.length || 0;
+    return `<button class="day-tab ${d===timetableDay?'active':''}" onclick="setTimetableDay('${d}')">${DAY_SHORT[i]}${count?` <span class="badge" style="font-size:.6rem;min-width:16px;height:16px">${count}</span>`:''}</button>`;
+  }).join('');
+  const periods = col.timetable[timetableDay] || [];
+  const hasSubjects = col.subjects.length > 0;
+  let periodsHtml = !periods.length
+    ? `<div class="empty-state" style="padding:1.5rem 0"><div class="empty-icon">📭</div><p>No classes on ${timetableDay}.</p></div>`
+    : periods.map(p => {
+        const subj = getSubject(col, p.subjectId);
+        return `<div class="period-item">
+          <div class="dot" style="background:${subj?.color||'#999'}"></div>
+          <div class="period-info">
+            <div class="period-title">${subj?escHtml(subj.name):'<span style="color:var(--red)">Deleted</span>'}</div>
+            <div class="period-meta">${p.type}${p.startTime?' · '+p.startTime:''}${p.endTime?'–'+p.endTime:''}</div>
+          </div>
+          <button class="btn btn-sm btn-secondary btn-icon" onclick="openPeriodModal('${timetableDay}','${p.id}')">✏️</button>
+          <button class="btn btn-sm btn-danger btn-icon" onclick="deletePeriod('${timetableDay}','${p.id}')">🗑</button>
+        </div>`;
+      }).join('');
+  const copyOptions = DAYS.filter(d=>d!==timetableDay).map(d=>`<option value="${d}">${d}</option>`).join('');
+  main.innerHTML = `
+    <div class="section-header"><h2>📆 Timetable</h2></div>
+    <div class="day-tabs">${daytabs}</div>
+    <div class="card">
+      <div class="section-header" style="margin-bottom:.5rem">
+        <h3>${timetableDay}</h3>
+        ${hasSubjects?`<button class="btn btn-primary btn-sm" onclick="openPeriodModal('${timetableDay}')">+ Add Class</button>`:''}
+      </div>
+      ${!hasSubjects?'<div class="text-sm text-muted">Add subjects below first.</div>':''}
+      <div class="scroll-list mt-1">${periodsHtml}</div>
+    </div>
+    ${periods.length?`<div class="card mt-2"><div class="flex items-center gap-1">
+      <span class="text-sm">Copy ${timetableDay} to:</span>
+      <select id="copy-day-sel" style="flex:1;font-size:.85rem">${copyOptions}</select>
+      <button class="btn btn-secondary btn-sm" onclick="copyDayTimetable()">Copy</button>
+    </div></div>`:''}
+    <div class="card mt-2">
+      <div class="section-header" style="margin-bottom:.5rem"><h3>Subjects</h3>
+        <button class="btn btn-primary btn-sm" onclick="openSubjectModal()">+ Add</button></div>
+      ${col.subjects.length===0
+        ? '<div class="empty-state" style="padding:1rem 0"><p>No subjects yet.</p></div>'
+        : col.subjects.map(s=>`<div class="subject-row">
+            <div class="dot" style="background:${s.color}"></div>
+            <div class="subject-info">
+              <div class="subject-name">${escHtml(s.name)}${s.code?` <span class="text-xs text-muted">(${escHtml(s.code)})</span>`:''}</div>
+              ${s.teacher?`<div class="subject-meta">👤 ${escHtml(s.teacher)}</div>`:''}
+            </div>
+            <button class="btn btn-sm btn-secondary btn-icon" onclick="openSubjectModal('${s.id}')">✏️</button>
+          </div>`).join('')
+      }
+    </div>`;
+}
+function setTimetableDay(day) { timetableDay = day; renderPage(); }
+function openPeriodModal(day, editId = null) {
+  const col = activeCollege(); if (!col) return;
+  if (!col.subjects.length) { showToast('⚠️ Add subjects first'); return; }
+  const p = editId ? (col.timetable[day]||[]).find(x=>x.id===editId) : null;
+  const subjOptions = col.subjects.map(s=>`<option value="${s.id}" ${p?.subjectId===s.id?'selected':''}>${escHtml(s.name)}</option>`).join('');
+  const typeOptions = ['Lecture','Lab','Tutorial'].map(t=>`<option value="${t}" ${(p?.type||'Lecture')===t?'selected':''}>${t}</option>`).join('');
+  openModal(p?'Edit Class':`Add Class – ${day}`, `
+    <div class="form-group"><label for="mp-subj">Subject *</label><select id="mp-subj">${subjOptions}</select></div>
+    <div class="form-group"><label for="mp-type">Type</label><select id="mp-type">${typeOptions}</select></div>
+    <div class="form-row">
+      <div class="form-group"><label for="mp-start">Start Time</label><input id="mp-start" type="time" value="${p?.startTime||''}"></div>
+      <div class="form-group"><label for="mp-end">End Time</label><input id="mp-end" type="time" value="${p?.endTime||''}"></div>
+    </div>
+    <div class="flex gap-1 mt-2">
+      ${editId?`<button class="btn btn-danger btn-sm" onclick="deletePeriod('${day}','${editId}',true)">🗑</button>`:''}
+      <button class="btn btn-primary flex-1" onclick="savePeriod('${day}','${editId||''}')">${p?'Save':'Add Class'}</button>
+    </div>`);
+}
+function savePeriod(day, editId) {
+  const col = activeCollege(); if (!col) return;
+  const subjectId = document.getElementById('mp-subj').value;
+  const type      = document.getElementById('mp-type').value;
+  const startTime = document.getElementById('mp-start').value;
+  const endTime   = document.getElementById('mp-end').value;
+  if (!subjectId) { showToast('⚠️ Select a subject'); return; }
+  if (!col.timetable[day]) col.timetable[day] = [];
+  if (editId) {
+    const p = col.timetable[day].find(x=>x.id===editId);
+    if (p) { p.subjectId=subjectId; p.type=type; p.startTime=startTime; p.endTime=endTime; }
+    showToast('✅ Class updated');
+  } else {
+    col.timetable[day].push({id:uid(),subjectId,type,startTime,endTime});
+    showToast('✅ Class added');
+  }
+  saveState(); closeModal(); renderPage();
+}
+function deletePeriod(day, id, fromModal=false) {
+  const col = activeCollege(); if (!col) return;
+  col.timetable[day] = (col.timetable[day]||[]).filter(p=>p.id!==id);
+  saveState(); if (fromModal) closeModal(); renderPage(); showToast('🗑 Class removed');
+}
+function copyDayTimetable() {
+  const col = activeCollege(); if (!col) return;
+  const target = document.getElementById('copy-day-sel')?.value; if (!target) return;
+  const src = JSON.parse(JSON.stringify(col.timetable[timetableDay]||[]));
+  src.forEach(p => p.id = uid());
+  col.timetable[target] = src;
+  saveState(); showToast(`✅ Copied to ${target}`); renderPage();
+}
+
+/* =========================================================
+   SECTION 12: TODAY / ATTENDANCE MARKING
+   ========================================================= */
+function renderToday(main, col) {
+  const classes = getScheduledClasses(col, currentDate);
+  const dayRec  = getDayRecord(col, currentDate);
+  const isHoliday = dayRec?.holiday || false;
+  let classesHtml = '';
+  if (isHoliday) {
+    classesHtml = `<div class="empty-state"><div class="empty-icon">🎉</div><h3>Holiday!</h3><p>No classes today.</p></div>`;
+  } else if (!col.subjects.length) {
+    classesHtml = `<div class="empty-state"><div class="empty-icon">📚</div><h3>No Subjects</h3>
+      <p>Add subjects and build your timetable first.</p>
+      <button class="btn btn-primary" onclick="navigate('timetable')">Go to Timetable</button></div>`;
+  } else if (!classes.length) {
+    classesHtml = `<div class="empty-state"><div class="empty-icon">☀️</div><h3>No Classes Scheduled</h3><p>No classes from timetable on this day.</p></div>`;
+  } else {
+    classesHtml = classes.map(cls => renderClassRow(col, cls, currentDate, isHoliday)).join('');
+  }
+  main.innerHTML = `
+    <div class="section-header"><h2>📅 Today's Attendance</h2></div>
+    <div class="date-nav">
+      <button class="btn btn-secondary btn-icon" onclick="shiftDate(-1)" aria-label="Previous day">◀</button>
+      <input type="date" id="date-picker" value="${currentDate}" style="flex:1;font-size:.875rem" onchange="setDate(this.value)" aria-label="Select date">
+      <button class="btn btn-secondary btn-icon" onclick="shiftDate(1)" aria-label="Next day">▶</button>
+    </div>
+    <div style="text-align:center;margin-bottom:.75rem;color:var(--text2);font-size:.85rem">
+      ${dateLabel(currentDate)}${isToday(currentDate)?' <span class="chip chip-blue" style="font-size:.72rem">Today</span>':''}
+    </div>
+    <div class="card" style="margin-bottom:.75rem">
+      <div class="flex items-center justify-between" style="margin-bottom:.5rem">
+        <h3>Classes</h3>
+        <div class="flex gap-1">
+          <button class="btn btn-sm btn-${isHoliday?'primary':'secondary'}" onclick="toggleHoliday('${currentDate}')">
+            ${isHoliday?'✅ Holiday':'🎉 Holiday'}
+          </button>
+          ${!isHoliday?`<button class="btn btn-sm btn-secondary" onclick="openAddExtraClass('${currentDate}')">+ Extra</button>`:''}
+        </div>
+      </div>
+      <div id="classes-list">${classesHtml}</div>
+    </div>
+    ${!isHoliday&&classes.length?`
+    <div class="card">
+      <h3 style="margin-bottom:.5rem">Quick Actions</h3>
+      <div class="flex gap-1" style="flex-wrap:wrap">
+        <button class="btn btn-secondary btn-sm" onclick="markAllDay('present','${currentDate}')">✅ All Present</button>
+        <button class="btn btn-secondary btn-sm" onclick="markAllDay('absent','${currentDate}')">❌ All Absent</button>
+        <button class="btn btn-secondary btn-sm" onclick="markAllDay('cancelled','${currentDate}')">🚫 All Cancelled</button>
+      </div>
+    </div>`:''}`;
+}
+function renderClassRow(col, cls, dateStr, isHoliday) {
+  const subj = getSubject(col, cls.subjectId);
+  const color = subj?.color || '#999';
+  const name  = subj ? escHtml(subj.name) : '<em style="color:var(--red)">Unknown</em>';
+  const dayRec = getDayRecord(col, dateStr);
+  const classRec = dayRec?.classes?.find(c => c.id===cls.id || c.ttId===cls.ttId);
+  const note = classRec?.note || '';
+  const refId = cls.ttId || cls.id;
+  const refType = cls.isExtra ? 'extra' : 'tt';
+  const noteHtml = `<div style="margin-top:.4rem">
+    <input type="text" placeholder="Note (optional)" value="${escHtml(note)}"
+      style="font-size:.8rem;padding:.35rem .6rem"
+      onchange="setClassNote('${dateStr}','${refId}','${refType}',this.value)"
+      aria-label="Note for class">
+  </div>`;
+  const removeBtn = cls.isExtra
+    ? `<button class="btn btn-sm btn-danger btn-icon" onclick="removeExtraClass('${dateStr}','${cls.id}')">🗑</button>`
+    : `<button class="btn btn-sm btn-secondary btn-icon" onclick="removeScheduledClass('${dateStr}','${cls.ttId}')">✖</button>`;
+  return `<div class="period-item" style="flex-direction:column;align-items:stretch;gap:.5rem;margin-bottom:.5rem;background:var(--bg2);border:1px solid var(--border)">
+    <div class="flex items-center gap-1">
+      <div class="dot" style="background:${color}"></div>
+      <div class="flex-1">
+        <div class="period-title">${name}${cls.isExtra?' <span class="chip chip-blue" style="font-size:.68rem">Extra</span>':''}</div>
+        <div class="period-meta">${escHtml(cls.type)}${cls.startTime?' · '+cls.startTime:''}${cls.endTime?'–'+cls.endTime:''}</div>
+      </div>
+      ${removeBtn}
+    </div>
+    ${!isHoliday?`
+    <div class="att-btns">
+      <button class="att-btn att-btn-present ${cls.status==='present'?'selected':''}" onclick="markClass('${dateStr}','${refId}','${refType}','present')">✅ Present</button>
+      <button class="att-btn att-btn-absent ${cls.status==='absent'?'selected':''}" onclick="markClass('${dateStr}','${refId}','${refType}','absent')">❌ Absent</button>
+      <button class="att-btn att-btn-cancel ${cls.status==='cancelled'?'selected':''}" onclick="markClass('${dateStr}','${refId}','${refType}','cancelled')">🚫 Cancel</button>
+    </div>
+    ${noteHtml}`:''}
+  </div>`;
+}
+function setDate(v) { if (v) { currentDate = v; renderPage(); } }
+function shiftDate(delta) {
+  const d = new Date(currentDate+'T00:00:00'); d.setDate(d.getDate()+delta);
+  currentDate = d.toISOString().split('T')[0]; renderPage();
+}
+function toggleHoliday(dateStr) {
+  const col = activeCollege(); if (!col) return;
+  const rec = ensureDayRecord(col, dateStr); const prev = rec.holiday;
+  rec.holiday = !prev; saveState(); renderPage();
+  showToast(rec.holiday?'🎉 Marked as holiday':'✅ Holiday removed', true, () => { rec.holiday=prev; saveState(); renderPage(); });
+}
+function markClass(dateStr, classRefId, refType, status) {
+  const col = activeCollege(); if (!col) return;
+  const rec = ensureDayRecord(col, dateStr);
+  if (refType === 'extra') {
+    const e = rec.classes.find(c => c.id===classRefId && c.isExtra);
+    if (e) { const prev=e.status; e.status=status; saveState(); renderPage();
+      showToast(statusEmoji(status)+' Marked', true, ()=>{ e.status=prev; saveState(); renderPage(); }); return; }
+  } else {
+    const e = rec.classes.find(c => c.ttId===classRefId);
+    if (e) { const prev=e.status; e.status=status; saveState(); renderPage();
+      showToast(statusEmoji(status)+' Marked', true, ()=>{ e.status=prev; saveState(); renderPage(); }); return; }
+    const ttDay = DAYS[new Date(dateStr+'T00:00:00').getDay()===0?6:new Date(dateStr+'T00:00:00').getDay()-1];
+    const slot = (col.timetable[ttDay]||[]).find(s=>s.id===classRefId);
+    if (!slot) return;
+    rec.classes.push({id:uid(),ttId:slot.id,subjectId:slot.subjectId,type:slot.type,status,note:'',isExtra:false});
+  }
+  saveState(); renderPage();
+  showToast(statusEmoji(status)+' Marked', true, ()=>{
+    const r=ensureDayRecord(col,dateStr);
+    const c=r.classes.find(x=>x.ttId===classRefId||(x.isExtra&&x.id===classRefId));
+    if(c){c.status=null;saveState();renderPage();}
+  });
+}
+function statusEmoji(s) { return s==='present'?'✅':s==='absent'?'❌':s==='cancelled'?'🚫':'⚪'; }
+function setClassNote(dateStr, classRefId, refType, note) {
+  const col = activeCollege(); if (!col) return;
+  const rec = ensureDayRecord(col, dateStr);
+  const cls = refType==='extra' ? rec.classes.find(c=>c.id===classRefId&&c.isExtra) : rec.classes.find(c=>c.ttId===classRefId);
+  if (cls) { cls.note=note; saveState(); }
+}
+function markAllDay(status, dateStr) {
+  const col = activeCollege(); if (!col) return;
+  const classes = getScheduledClasses(col, dateStr);
+  const rec = ensureDayRecord(col, dateStr);
+  for (const cls of classes) {
+    if (cls.isExtra) {
+      const e = rec.classes.find(c=>c.id===cls.id&&c.isExtra); if(e) e.status=status;
+    } else {
+      const e = rec.classes.find(c=>c.ttId===cls.ttId);
+      if (e) { e.status=status; } else {
+        const ttDay = DAYS[new Date(dateStr+'T00:00:00').getDay()===0?6:new Date(dateStr+'T00:00:00').getDay()-1];
+        const slot = (col.timetable[ttDay]||[]).find(s=>s.id===cls.ttId);
+        if(slot) rec.classes.push({id:uid(),ttId:slot.id,subjectId:slot.subjectId,type:slot.type,status,note:'',isExtra:false});
+      }
+    }
+  }
+  saveState(); renderPage(); showToast(statusEmoji(status)+' All marked');
+}
+function removeScheduledClass(dateStr, ttId) {
+  const col = activeCollege(); if (!col) return;
+  const rec = ensureDayRecord(col, dateStr);
+  const existing = rec.classes.find(c=>c.ttId===ttId);
+  if (existing) { existing.removed=true; } else {
+    const ttDay = DAYS[new Date(dateStr+'T00:00:00').getDay()===0?6:new Date(dateStr+'T00:00:00').getDay()-1];
+    const slot = (col.timetable[ttDay]||[]).find(s=>s.id===ttId);
+    if(slot) rec.classes.push({id:uid(),ttId,subjectId:slot.subjectId,type:slot.type,status:null,note:'',isExtra:false,removed:true});
+  }
+  saveState(); renderPage();
+  showToast('✖ Removed for today', true, ()=>{
+    const r=ensureDayRecord(col,dateStr); const c=r.classes.find(x=>x.ttId===ttId);
+    if(c){delete c.removed;saveState();renderPage();}
+  });
+}
+function removeExtraClass(dateStr, id) {
+  const col = activeCollege(); if (!col) return;
+  const rec = ensureDayRecord(col, dateStr);
+  rec.classes = rec.classes.filter(c=>!(c.id===id&&c.isExtra));
+  saveState(); renderPage(); showToast('🗑 Extra class removed');
+}
+function openAddExtraClass(dateStr) {
+  const col = activeCollege(); if (!col) return;
+  if (!col.subjects.length) { showToast('⚠️ Add subjects first'); return; }
+  const subjOptions = col.subjects.map(s=>`<option value="${s.id}">${escHtml(s.name)}</option>`).join('');
+  const typeOptions = ['Lecture','Lab','Tutorial'].map(t=>`<option value="${t}">${t}</option>`).join('');
+  openModal('Add Extra Class', `
+    <div class="form-group"><label for="ex-subj">Subject *</label><select id="ex-subj">${subjOptions}</select></div>
+    <div class="form-group"><label for="ex-type">Type</label><select id="ex-type">${typeOptions}</select></div>
+    <div class="form-row">
+      <div class="form-group"><label for="ex-start">Start Time</label><input id="ex-start" type="time"></div>
+      <div class="form-group"><label for="ex-end">End Time</label><input id="ex-end" type="time"></div>
+    </div>
+    <button class="btn btn-primary btn-full mt-2" onclick="saveExtraClass('${dateStr}')">Add Class</button>`);
+}
+function saveExtraClass(dateStr) {
+  const col = activeCollege(); if (!col) return;
+  const subjectId = document.getElementById('ex-subj').value;
+  const type      = document.getElementById('ex-type').value;
+  const startTime = document.getElementById('ex-start').value;
+  const endTime   = document.getElementById('ex-end').value;
+  const rec = ensureDayRecord(col, dateStr);
+  rec.classes.push({id:uid(),ttId:null,subjectId,type,startTime,endTime,status:null,note:'',isExtra:true});
+  saveState(); closeModal(); renderPage(); showToast('✅ Extra class added');
+}
+
+/* =========================================================
+   SECTION 13: DASHBOARD
+   ========================================================= */
+function renderDashboard(main, col) {
+  const overall = calcOverallStats(col);
+  const target  = col.minTarget;
+  const op = overall.pct;
+  const ringColor = op===null?'var(--text3)':op>=target?'var(--green)':op>=target-10?'var(--yellow)':'var(--red)';
+  const R=54, C=2*Math.PI*R, fill=op!==null?(op/100)*C:0;
+  const ringHtml = `
+    <div class="ring-wrap" style="margin:0 auto 1rem;width:140px;height:140px">
+      <svg width="140" height="140" viewBox="0 0 140 140" aria-hidden="true">
+        <circle cx="70" cy="70" r="${R}" fill="none" stroke="var(--bg3)" stroke-width="12"/>
+        <circle cx="70" cy="70" r="${R}" fill="none" stroke="${ringColor}" stroke-width="12"
+          stroke-dasharray="${fill} ${C}" stroke-linecap="round" transform="rotate(-90 70 70)"
+          style="transition:stroke-dasharray .6s cubic-bezier(.4,0,.2,1)"/>
+      </svg>
+      <div class="ring-text"><span style="color:${ringColor}">${op!==null?op.toFixed(1)+'%':'—'}</span><small>Overall</small></div>
+    </div>`;
+  const statsGrid = `<div class="stats-grid">
+    <div class="stat-card"><div class="stat-value">${overall.present}</div><div class="stat-label">Classes Attended</div></div>
+    <div class="stat-card"><div class="stat-value">${overall.total}</div><div class="stat-label">Classes Held</div></div>
+    <div class="stat-card"><div class="stat-value">${target}%</div><div class="stat-label">Target</div></div>
+    <div class="stat-card"><div class="stat-value" style="color:${ringColor}">${op!==null?(op>=target?'✅':'⚠️'):'—'}</div>
+      <div class="stat-label">${op!==null?(op>=target?'On Track':'Below Target'):'No Data'}</div></div>
+  </div>`;
+  let subjCards = '';
+  if (!col.subjects.length) {
+    subjCards = `<div class="empty-state"><div class="empty-icon">📚</div><h3>No Subjects</h3>
+      <p>Add subjects to see stats.</p><button class="btn btn-primary" onclick="navigate('timetable')">Add Subjects</button></div>`;
+  } else {
+    subjCards = col.subjects.map(s => {
+      const st = calcSubjectStats(col, s.id);
+      const p  = pct(st.present, st.total);
+      const sc = p===null?'gray':p>=target?'green':p>=target-10?'yellow':'red';
+      const insight = st.total ? calcSubjectInsight(st.present, st.total, target) : null;
+      return `<div class="subj-stat-card">
+        <div class="subj-stat-header">
+          <div class="dot" style="background:${s.color};width:14px;height:14px"></div>
+          <div style="flex:1">
+            <div style="font-weight:600">${escHtml(s.name)}${s.code?` <span class="text-xs text-muted">(${escHtml(s.code)})</span>`:''}</div>
+            <div class="text-xs text-muted">${st.present}/${st.total} classes</div>
+          </div>
+          <div class="subj-stat-pct" style="color:var(--${sc})">${p!==null?p.toFixed(1)+'%':'—'}</div>
+        </div>
+        <div class="progress-bar"><div class="progress-bar-fill" style="width:${p!==null?p.toFixed(1):0}%;background:var(--${sc})"></div></div>
+        ${insight?`<div class="subj-insight">${insight.type==='below'?'⚠️':'✅'} ${insight.text}</div>`:''}
+        ${renderWhatIf(s.id, st.present, st.total, target)}
+      </div>`;
+    }).join('');
+  }
+  main.innerHTML = `
+    <div class="section-header"><h2>📊 Dashboard</h2></div>
+    <div class="card" style="text-align:center">${ringHtml}${statsGrid}</div>
+    <h3 style="margin:1rem 0 .5rem;font-size:1rem">Per Subject</h3>
+    ${subjCards}
+    <div class="card mt-2">
+      <h3 style="margin-bottom:.75rem">📈 Attendance Trend</h3>
+      <canvas id="trend-canvas" height="180" aria-label="Attendance trend chart"></canvas>
+    </div>`;
+  requestAnimationFrame(() => drawTrendChart(col));
+}
+function renderWhatIf(subjId, present, total, target) {
+  const id = `wi-${subjId}`;
+  return `<div class="whatif-wrap">
+    <div class="text-xs text-muted" style="margin-bottom:.4rem">What-if calculator</div>
+    <div class="whatif-row">
+      <span class="text-sm">If I miss next</span>
+      <input type="number" min="0" max="200" value="1" id="${id}" style="width:64px"
+        oninput="updateWhatIf('${subjId}',${present},${total})" aria-label="Classes to miss">
+      <span class="text-sm">classes →</span>
+      <span class="whatif-result" id="${id}-res">${calcWhatIfDisplay(present,total,1,target)}</span>
+    </div>
+  </div>`;
+}
+function calcWhatIfDisplay(present, total, n, target) {
+  const p = calcWhatIf(present, total, parseInt(n)||0);
+  if (p===null) return '—';
+  const col = p>=target?'var(--green)':p>=target-10?'var(--yellow)':'var(--red)';
+  return `<span style="color:${col}">${p.toFixed(1)}%</span>`;
+}
+function updateWhatIf(subjId, present, total) {
+  const col = activeCollege(); if (!col) return;
+  const inp = document.getElementById(`wi-${subjId}`);
+  const res = document.getElementById(`wi-${subjId}-res`);
+  if (inp && res) res.innerHTML = calcWhatIfDisplay(present, total, inp.value, col.minTarget);
+}
+
+/* =========================================================
+   SECTION 14: TREND CHART
+   ========================================================= */
+function drawTrendChart(col) {
+  const canvas = document.getElementById('trend-canvas'); if (!canvas) return;
+  const dpr=window.devicePixelRatio||1, W=canvas.offsetWidth, H=180;
+  canvas.width=W*dpr; canvas.height=H*dpr;
+  const ctx=canvas.getContext('2d'); ctx.scale(dpr,dpr);
+  const pts=calcTrend(col);
+  const isDark=document.documentElement.getAttribute('data-theme')==='dark';
+  const gridColor=isDark?'rgba(255,255,255,.08)':'rgba(0,0,0,.07)';
+  const textColor=isDark?'#94a3b8':'#64748b';
+  const lineColor='#6366f1';
+  const target=col.minTarget;
+  const padL=32,padR=16,padT=16,padB=36,cW=W-padL-padR,cH=H-padT-padB,n=pts.length;
+  const xStep=n>1?cW/(n-1):cW;
+  ctx.font=`11px -apple-system,sans-serif`; ctx.textAlign='right'; ctx.fillStyle=textColor;
+  for (const lv of [0,25,50,75,100]) {
+    const y=padT+cH-(lv/100)*cH;
+    ctx.strokeStyle=lv===target?(isDark?'rgba(99,102,241,.4)':'rgba(99,102,241,.3)'):gridColor;
+    ctx.lineWidth=lv===target?1.5:1; ctx.setLineDash(lv===target?[4,4]:[]);
+    ctx.beginPath(); ctx.moveTo(padL,y); ctx.lineTo(padL+cW,y); ctx.stroke();
+    ctx.fillText(lv+'%',padL-4,y+4);
+  }
+  ctx.setLineDash([]);
+  const coords=pts.map((p,i)=>({x:padL+i*xStep, y:p.pct!==null?padT+cH-(p.pct/100)*cH:null}));
+  const valid=coords.filter(c=>c.y!==null);
+  if (valid.length>=2) {
+    const grad=ctx.createLinearGradient(0,padT,0,padT+cH);
+    grad.addColorStop(0,isDark?'rgba(99,102,241,.35)':'rgba(99,102,241,.15)'); grad.addColorStop(1,'rgba(99,102,241,0)');
+    ctx.fillStyle=grad; ctx.beginPath();
+    ctx.moveTo(valid[0].x,padT+cH); valid.forEach(c=>ctx.lineTo(c.x,c.y));
+    ctx.lineTo(valid[valid.length-1].x,padT+cH); ctx.closePath(); ctx.fill();
+    ctx.strokeStyle=lineColor; ctx.lineWidth=2.5; ctx.lineJoin='round'; ctx.lineCap='round';
+    ctx.beginPath(); valid.forEach((c,i)=>i===0?ctx.moveTo(c.x,c.y):ctx.lineTo(c.x,c.y)); ctx.stroke();
+  }
+  ctx.textAlign='center';
+  pts.forEach((p,i)=>{
+    const c=coords[i]; ctx.fillStyle=textColor; ctx.fillText(p.label,c.x,H-padB+18);
+    if(c.y===null) return;
+    ctx.beginPath(); ctx.arc(c.x,c.y,4,0,2*Math.PI);
+    ctx.fillStyle='#fff'; ctx.fill(); ctx.strokeStyle=lineColor; ctx.lineWidth=2; ctx.stroke();
+  });
+}
+
+/* =========================================================
+   SECTION 15: CALENDAR
+   ========================================================= */
+function renderCalendar(main, col) {
+  const {year,month}=calendarMonth;
+  const summary=calcMonthSummary(col,year,month);
+  const monthName=new Date(year,month,1).toLocaleString(undefined,{month:'long',year:'numeric'});
+  const firstDay=new Date(year,month,1).getDay();
+  const startOffset=firstDay===0?6:firstDay-1;
+  const daysInMonth=new Date(year,month+1,0).getDate();
+  const headers=DAY_SHORT.map(d=>`<div class="cal-header-cell">${d}</div>`).join('');
+  let cells='';
+  for(let i=0;i<startOffset;i++) cells+=`<div class="cal-cell empty"></div>`;
+  for(let d=1;d<=daysInMonth;d++){
+    const dateStr=`${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const status=summary[dateStr]||'no-data';
+    const todayCls=dateStr===todayStr()?' today':'';
+    const hasCls=status!=='no-data'?' has-data':'';
+    cells+=`<div class="cal-cell ${status}${todayCls}${hasCls}" onclick="calCellClick('${dateStr}')"
+      role="button" aria-label="${dateStr}: ${status}">${d}</div>`;
+  }
+  main.innerHTML=`
+    <div class="section-header"><h2>🗓️ Calendar</h2></div>
+    <div class="card">
+      <div class="flex items-center justify-between" style="margin-bottom:.75rem">
+        <button class="btn btn-secondary btn-icon" onclick="shiftCalendar(-1)">◀</button>
+        <span style="font-weight:600;font-size:.95rem">${monthName}</span>
+        <button class="btn btn-secondary btn-icon" onclick="shiftCalendar(1)">▶</button>
+      </div>
+      <div class="flex gap-1" style="flex-wrap:wrap;margin-bottom:.75rem;font-size:.75rem">
+        <span class="chip chip-green">All Present</span><span class="chip chip-yellow">Partial</span>
+        <span class="chip chip-red">All Absent</span><span class="chip chip-blue">Holiday</span>
+        <span class="chip chip-gray">No Class</span>
+      </div>
+      <div class="calendar-grid">${headers}${cells}</div>
+    </div>`;
+}
+function shiftCalendar(delta) {
+  calendarMonth.month+=delta;
+  if(calendarMonth.month<0){calendarMonth.month=11;calendarMonth.year--;}
+  if(calendarMonth.month>11){calendarMonth.month=0;calendarMonth.year++;}
+  renderPage();
+}
+function calCellClick(dateStr) { currentDate=dateStr; navigate('today'); }
+
+/* =========================================================
+   SECTION 16: SETTINGS
+   ========================================================= */
+function renderSettings(main, col) {
+  const isDark=document.documentElement.getAttribute('data-theme')==='dark';
+  main.innerHTML=`
+    <div class="section-header"><h2>⚙️ Settings</h2></div>
+    ${col?`<div class="card mb-2"><h3 style="margin-bottom:.75rem">🏫 ${escHtml(col.name)}</h3>
+      <button class="btn btn-secondary btn-sm" onclick="openAddCollegeModal('${col.id}')">✏️ Edit College Settings</button></div>`:''}
+    <div class="card mb-2">
+      <h3 style="margin-bottom:.5rem">Appearance</h3>
+      <div class="setting-row">
+        <div><div class="setting-label">Dark Mode</div></div>
+        <label class="toggle" aria-label="Toggle dark mode">
+          <input type="checkbox" ${isDark?'checked':''} onchange="toggleTheme(this.checked)">
+          <span class="toggle-track"></span>
+        </label>
+      </div>
+    </div>
+    <div class="card mb-2">
+      <h3 style="margin-bottom:.5rem">Data</h3>
+      <div class="setting-row"><div><div class="setting-label">Export Backup (JSON)</div><div class="setting-desc">Full data backup</div></div>
+        <button class="btn btn-secondary btn-sm" onclick="exportJSON()">⬇️ Export</button></div>
+      <div class="setting-row"><div><div class="setting-label">Import Backup (JSON)</div><div class="setting-desc">Restore from backup</div></div>
+        <button class="btn btn-secondary btn-sm" onclick="importJSONClick()">⬆️ Import</button></div>
+      <div class="setting-row"><div><div class="setting-label">Export Attendance (CSV)</div><div class="setting-desc">Spreadsheet-friendly</div></div>
+        <button class="btn btn-secondary btn-sm" onclick="exportCSV()">📄 CSV</button></div>
+      <div class="setting-row"><div><div class="setting-label">Reset All Data</div><div class="setting-desc">Erase everything</div></div>
+        <button class="btn btn-danger btn-sm" onclick="resetAllData()">🗑 Reset</button></div>
+    </div>
+    <div class="card mb-2">
+      <h3 style="margin-bottom:.5rem">Manage Colleges</h3>
+      ${state.colleges.length===0?'<p class="text-sm text-muted">No colleges yet.</p>':
+        state.colleges.map(c=>`<div class="setting-row">
+          <div><div class="setting-label">${escHtml(c.name)}</div>
+          <div class="setting-desc">Target: ${c.minTarget}% · ${c.subjects.length} subjects</div></div>
+          <button class="btn btn-secondary btn-sm" onclick="openAddCollegeModal('${c.id}')">✏️</button>
+        </div>`).join('')}
+      <button class="btn btn-primary btn-sm mt-2" onclick="openAddCollegeModal()">+ Add College</button>
+    </div>
+    <input type="file" id="json-import-input" accept=".json" style="display:none" onchange="importJSON(event)">
+    <div style="text-align:center;padding:1rem 0;color:var(--text3);font-size:.75rem">Attendance Tracker v1.0 · Data stored locally</div>`;
+}
+
+/* =========================================================
+   SECTION 17: THEME
+   ========================================================= */
+function applyTheme() { document.documentElement.setAttribute('data-theme', state.theme||'light'); }
+function toggleTheme(isDark) {
+  const theme = isDark ? 'dark' : 'light';
+  document.documentElement.setAttribute('data-theme', theme);
+  state.theme = theme; saveState();
+  if (currentPage==='dashboard') { const c=activeCollege(); if(c) requestAnimationFrame(()=>drawTrendChart(c)); }
+}
+
+/* =========================================================
+   SECTION 18: EXPORT / IMPORT / RESET
+   ========================================================= */
+function exportJSON() {
+  const blob=new Blob([JSON.stringify(state,null,2)],{type:'application/json'});
+  const url=URL.createObjectURL(blob); const a=document.createElement('a');
+  a.href=url; a.download=`attendance-backup-${todayStr()}.json`; a.click(); URL.revokeObjectURL(url);
+  showToast('✅ Backup exported');
+}
+function importJSONClick() { document.getElementById('json-import-input')?.click(); }
+function importJSON(e) {
+  const file=e.target.files[0]; if(!file) return;
+  const reader=new FileReader();
+  reader.onload=ev=>{
+    try {
+      const data=JSON.parse(ev.target.result);
+      if(!data.colleges) throw new Error('Invalid');
+      openModal('Import Backup',`
+        <div class="confirm-danger">⚠️ This will replace all current data.</div>
+        <div class="flex gap-1">
+          <button class="btn btn-secondary flex-1" onclick="closeModal()">Cancel</button>
+          <button class="btn btn-primary flex-1" onclick="confirmImport()">Yes, Import</button>
+        </div>`);
+      window._pendingImport=data;
+    } catch(err) { showToast('⚠️ Invalid backup file'); }
+    e.target.value='';
+  };
+  reader.readAsText(file);
+}
+function confirmImport() {
+  if(!window._pendingImport) return;
+  state=Object.assign(defaultState(),window._pendingImport);
+  window._pendingImport=null;
+  saveState(); closeModal(); applyTheme(); renderCollegeSwitcher(); renderPage();
+  showToast('✅ Data imported');
+}
+function exportCSV() {
+  const col=activeCollege(); if(!col){showToast('⚠️ No active college');return;}
+  let csv='Date,Subject,Type,Status,Note\n';
+  for (const dateStr of Object.keys(col.attendance).sort()) {
+    const dayRec=getDayRecord(col,dateStr);
+    if(dayRec?.holiday){csv+=`${dateStr},,,Holiday,\n`;continue;}
+    for(const cls of getScheduledClasses(col,dateStr)){
+      const subj=getSubject(col,cls.subjectId);
+      csv+=[dateStr,subj?.name||'Unknown',cls.type,cls.status||'',cls.note||'']
+        .map(v=>`"${String(v).replace(/"/g,'""')}"`).join(',')+'\n';
+    }
+  }
+  const blob=new Blob([csv],{type:'text/csv'});
+  const url=URL.createObjectURL(blob); const a=document.createElement('a');
+  a.href=url; a.download=`attendance-${col.name}-${todayStr()}.csv`; a.click(); URL.revokeObjectURL(url);
+  showToast('📄 CSV exported');
+}
+function resetAllData() {
+  openModal('Reset All Data',`
+    <div class="confirm-danger">⚠️ This will permanently delete ALL data. Cannot be undone.</div>
+    <div class="flex gap-1">
+      <button class="btn btn-secondary flex-1" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-danger flex-1" onclick="confirmResetAll()">Yes, Delete Everything</button>
+    </div>`);
+}
+function confirmResetAll() {
+  const theme=state.theme; state=defaultState(); state.theme=theme;
+  saveState(); closeModal(); renderCollegeSwitcher(); renderPage(); showToast('🗑 All data reset');
+}
+
+/* =========================================================
+   SECTION 19: ONBOARDING WIZARD
+   ========================================================= */
+let wizardStep = 0;
+function showOnboarding() { wizardStep=0; renderWizardStep(); }
+function renderWizardStep() {
+  const steps=[
+    {title:'👋 Welcome!',      content:wizardStep0},
+    {title:'🏫 Add College',   content:wizardStep1},
+    {title:'📚 Add Subjects',  content:wizardStep2},
+    {title:'📆 Timetable',     content:wizardStep3},
+    {title:'🎉 All Set!',      content:wizardStep4},
+  ];
+  const s=steps[wizardStep];
+  const dots=steps.map((_,i)=>`<div class="wizard-step-dot ${i===wizardStep?'active':i<wizardStep?'done':''}"></div>`).join('');
+  openModal(s.title,`
+    <div class="wizard-steps">${dots}</div>
+    ${s.content()}
+    <div class="flex gap-1 mt-2">
+      ${wizardStep>0?`<button class="btn btn-secondary" onclick="wizardPrev()">← Back</button>`:''}
+      <button class="btn btn-primary flex-1" onclick="wizardNext()">${wizardStep<steps.length-1?'Next →':'Start Tracking!'}</button>
+    </div>`);
+}
+function wizardStep0() {
+  return `<div class="text-center" style="padding:.5rem 0">
+    <div style="font-size:3.5rem;margin-bottom:.75rem">📋</div>
+    <h3 style="margin-bottom:.5rem">College Attendance Tracker</h3>
+    <p class="text-sm text-muted">Track attendance, get smart insights, never miss your target.</p>
+    <div style="margin-top:1rem;display:grid;grid-template-columns:1fr 1fr;gap:.5rem;text-align:left">
+      <div class="card" style="padding:.6rem"><div style="font-size:1.3rem">🏫</div><div class="text-sm mt-1">Multiple colleges</div></div>
+      <div class="card" style="padding:.6rem"><div style="font-size:1.3rem">📊</div><div class="text-sm mt-1">Smart insights</div></div>
+      <div class="card" style="padding:.6rem"><div style="font-size:1.3rem">📅</div><div class="text-sm mt-1">Daily tracking</div></div>
+      <div class="card" style="padding:.6rem"><div style="font-size:1.3rem">💾</div><div class="text-sm mt-1">Backup & restore</div></div>
+    </div></div>`;
+}
+function wizardStep1() {
+  const existing=activeCollege();
+  return `<p class="text-sm text-muted mb-2">Name your college or semester profile.</p>
+    <div class="form-group"><label for="wz-name">College / Profile Name *</label>
+      <input id="wz-name" type="text" placeholder="e.g. B.Tech – Sem 3" maxlength="60" value="${existing?escHtml(existing.name):''}"></div>
+    <div class="form-row">
+      <div class="form-group"><label for="wz-target">Min. Target (%)</label>
+        <input id="wz-target" type="number" min="1" max="100" value="${existing?.minTarget??75}"></div>
+      <div class="form-group"><label for="wz-start">Sem Start</label>
+        <input id="wz-start" type="date" value="${existing?.semesterStart||''}"></div>
+    </div>`;
+}
+function wizardStep2() {
+  const col=activeCollege();
+  const list=col?col.subjects.map(s=>`<div class="subject-row">
+    <div class="dot" style="background:${s.color}"></div>
+    <div class="subject-info"><div class="subject-name">${escHtml(s.name)}</div></div>
+    <button class="btn btn-sm btn-secondary btn-icon" onclick="openSubjectModal('${s.id}');setTimeout(renderWizardStep,50)">✏️</button>
+  </div>`).join(''):'';
+  return `<p class="text-sm text-muted mb-2">Add subjects you attend.</p>
+    <div style="max-height:200px;overflow-y:auto;border:1px solid var(--border);border-radius:8px;padding:.5rem;margin-bottom:.75rem">
+      ${list||'<div class="text-sm text-muted" style="padding:.5rem">No subjects yet.</div>'}
+    </div>
+    <button class="btn btn-secondary btn-full" onclick="openSubjectModal();setTimeout(renderWizardStep,50)">+ Add Subject</button>`;
+}
+function wizardStep3() {
+  return `<p class="text-sm text-muted mb-2">Build your timetable after the wizard. You can skip this step.</p>
+    <div class="card" style="text-align:center;padding:1rem">
+      <div style="font-size:2rem;margin-bottom:.5rem">📆</div>
+      <p class="text-sm">Tap <strong>Timetable</strong> in the navigation to set up your weekly schedule.</p>
+    </div>`;
+}
+function wizardStep4() {
+  const col=activeCollege();
+  return `<div class="text-center"><div style="font-size:3rem;margin-bottom:.75rem">🎉</div>
+    <h3 style="margin-bottom:.5rem">You're all set!</h3>
+    <p class="text-sm text-muted">${col?`College "<strong>${escHtml(col.name)}</strong>" ready. `:''} Start marking in <strong>Today</strong>.</p>
+    <div style="margin-top:1rem;font-size:.8rem;color:var(--text3)">Tip: Check Dashboard for smart attendance insights.</div>
+  </div>`;
+}
+function wizardPrev() { if(wizardStep>0){wizardStep--;renderWizardStep();} }
+function wizardNext() {
+  if (wizardStep===1) {
+    const name=document.getElementById('wz-name')?.value.trim();
+    const target=parseInt(document.getElementById('wz-target')?.value)||75;
+    const start=document.getElementById('wz-start')?.value||'';
+    if(!name){showToast('⚠️ Enter a college name');return;}
+    const existing=activeCollege();
+    if(existing){existing.name=name;existing.minTarget=clamp(target,1,100);existing.semesterStart=start;}
+    else{const col=makeCollege(name);col.minTarget=clamp(target,1,100);col.semesterStart=start;state.colleges.push(col);state.activeCollegeId=col.id;}
+    saveState(); renderCollegeSwitcher();
+  }
+  if(wizardStep<4){wizardStep++;renderWizardStep();}
+  else{state.onboardingDone=true;saveState();closeModal();renderPage();}
+}
+
+/* =========================================================
+   SECTION 21: INIT
+   ========================================================= */
+function init() {
+  loadState();
+  applyTheme();
+
+  document.getElementById('modal-close-btn').addEventListener('click', closeModal);
+  document.getElementById('modal-overlay').addEventListener('click', e => { if(e.target===document.getElementById('modal-overlay')) closeModal(); });
+  document.addEventListener('keydown', e => { if(e.key==='Escape') closeModal(); });
+
+  document.getElementById('theme-toggle-btn').addEventListener('click', () => {
+    const isDark=document.documentElement.getAttribute('data-theme')==='dark';
+    toggleTheme(!isDark);
+    if(currentPage==='settings') renderPage();
+  });
+  document.getElementById('add-college-btn').addEventListener('click', openAddCollegeModal);
+  document.getElementById('college-switcher').addEventListener('change', e => {
+    state.activeCollegeId=e.target.value||null; saveState(); renderPage();
+  });
+  document.querySelectorAll('.nav-item').forEach(btn => {
+    btn.addEventListener('click', () => navigate(btn.dataset.page));
+  });
+
+  renderCollegeSwitcher();
+  if(!state.onboardingDone||state.colleges.length===0){renderPage();showOnboarding();}
+  else{navigate('today');}
+}
+
+document.addEventListener('DOMContentLoaded', init);
+</script>
+</body>
+</html>
